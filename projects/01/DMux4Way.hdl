@@ -5,7 +5,7 @@
 
 /**
  * 4-way demultiplexor:
- * {a, b, c, d} = {in, 0, 0, 0} if sel == 00
+ * {a, b, c, d} = {in, 0, 0, 0} if sel == 00  
  *                {0, in, 0, 0} if sel == 01
  *                {0, 0, in, 0} if sel == 10
  *                {0, 0, 0, in} if sel == 11
@@ -16,5 +16,11 @@ CHIP DMux4Way {
     OUT a, b, c, d;
 
     PARTS:
-    // Put your code here:
+
+    DMux (in=in, sel=sel[0], a=mux0a, b=mux0b); 
+    Not (in=sel[1], out=notsel);
+    And (a=notsel, b=mux0a, out=a);
+    And (a=notsel, b=mux0b, out=b);
+    And (a=sel[1], b=mux0a, out=c);
+    And (a=sel[1], b=mux0b, out=d);
 }
