@@ -42,5 +42,36 @@ CHIP ALU {
         ng; // 1 if (out < 0),  0 otherwise
 
     PARTS:
-   // Put you code here:
+
+    // if (zx == 1) set x = 0        // 16-bit constant
+    Mux16 (a=x, b[0]=false, b[1]=false, b[2]=false, b[3]=false, b[4]=false, b[5]=false, b[6]=false, b[7]=false, b[8]=false, b[9]=false, b[10]=false, b[11]=false, b[12]=false, b[13]=false, b[14]=false, b[15]=false, sel=zx, out=xOrZero);
+
+    // if (nx == 1) set x = !x       // bitwise not
+    Not16 (in=xOrZero, out=notx);
+    Mux16 (a=xOrZero, b=notx, sel=nx, out=newx);
+
+    // if (zy == 1) set y = 0        // 16-bit constant
+    Mux16 (a=y, b[0]=false, b[1]=false, b[2]=false, b[3]=false, b[4]=false, b[5]=false, b[6]=false, b[7]=false, b[8]=false, b[9]=false, b[10]=false, b[11]=false, b[12]=false, b[13]=false, b[14]=false, b[15]=false, sel=zy, out=yOrZero);
+
+    // if (ny == 1) set y = !y       // bitwise not
+    Not16 (in=yOrZero, out=noty);
+    Mux16 (a=yOrZero, b=noty, sel=ny, out=newy);
+
+    // if (f == 1)  set out = x + y  // integer 2's complement addition
+    // if (f == 0)  set out = x & y  // bitwise and
+    Add16 (a=newx, b=newy, out=addxy);
+    And16 (a=newx, b=newy, out=andxy);
+    Mux16 (a=andxy, b=addxy, sel=f, out=addorand);
+
+    // if (no == 1) set out = !out   // bitwise not
+    Not16 (in=addorand, out=notaddorand);
+    Mux16 (a=addorand, b=notaddorand, sel=no, out=out);
+    Mux16 (a=addorand, b=notaddorand, sel=no, out=outlocal);
+
+    // if (out == 0) set zr = 1
+    Or16Way (in=outlocal, out=any1);
+    Not (in=any1, out=zr);
+
+    // if (out < 0) set ng = 1
+    LessThanZero (in=outlocal, out=ng);
 }
