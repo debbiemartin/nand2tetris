@@ -10,3 +10,30 @@
 // R0 >= 0, R1 >= 0, and R0*R1 < 32768.
 
 // Put your code here.
+
+@nloop
+M=1
+
+@R2
+M=0
+
+(LOOP)
+   @nloop
+   D=M
+   @R0
+   D=D-M // 0 if nloop == R0
+   @END
+   D; JGT // if nloop > R0 go to end 
+
+   @nloop
+   M=M+1 // increment loop
+   @R1
+   D=M
+   @R2
+   M=M+D // add R1 to R2  
+   @LOOP
+   0; JMP
+
+(END)
+    @END  
+    0; JMP
