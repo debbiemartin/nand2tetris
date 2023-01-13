@@ -1,0 +1,20 @@
+/**
+ * Memory of 8K registers, each 16 bit-wide. Out holds the value
+ * stored at the memory location specified by address. If load==1, then 
+ * the in value is loaded into the memory location specified by address 
+ * (the loaded value will be emitted to out from the next time step onward).
+ */
+
+CHIP RAM8K {
+    IN in[16], load, address[13];
+    OUT out[16];
+
+    PARTS:
+    
+    DMux(in=load, sel=address[0], a=a, b=b);
+    
+    RAM4K (in=in, load=a, address=address[1..12], out=outa);
+    RAM4K (in=in, load=b, address=address[1..12], out=outb);
+
+    Mux16 (a=outa, b=outb, sel=address[0], out=out);
+}

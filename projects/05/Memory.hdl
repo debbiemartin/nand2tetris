@@ -27,5 +27,24 @@ CHIP Memory {
     OUT out[16];
 
     PARTS:
-    // Put your code here:
+
+    DMux (in=load, sel=address[0], a=dataLoad, b=screenOrKeyboardLoad);
+    DMux (in=screenOrKeyboardLoad, sel=address[1], a=screenLoad, b=keyboardLoad);
+    
+
+    // Data memory (0-16,383 i.e. 2^14 size)
+    // 000000000000000 - 011111111111111
+    RAM16K (in=in, load=dataLoad, address=address[1..14], out=dataOut);
+
+    // Screen memory (16,384-24,575 i.e. 2^13 size)
+    // 100000000000000 - 101111111111111
+    RAM8K (in=in, load=screenLoad, address=address[2..14], out=screenOut);
+    
+    
+    // Keyboard memory (24,576)
+    // 110000000000000
+    Register (in=in, load=keyboardLoad, out=keyboardOut);
+
+    Mux16 (a=screenOut, b=keyboardOut, sel=address[1], out=screenOrKeyboardOut);
+    Mux16 (a=dataOut, b=screenOrKeyboardOut, sel=address[0], out=out); 
 }

@@ -40,4 +40,55 @@ CHIP CPU {
 
     PARTS:
     // Put your code here:
+
+    // C-instruction is 1 1 1 a c1 c2 c3 c4 c5 c6 d1 d2 d3 j1 j2 j3
+    // A-instruction is 0 0 0 0 0 0 0 0 0 0 0 1 0 1 0 1 i.e. 0 then 15 bit number
+    Not (in=instruction[15], out=AInstruction);
+    Not (in=AInstruction, out=CInstruction);
+
+    // A register - load is either C-instruction d1 or A-instruction
+    Mux16(a=outALU, b=instruction, sel=AInstruction, out=outAMux); // write to A depending on the leftmost instruction bit 
+    And (a=CInstruction, b=instruction[5], out=loadAC);
+    Or (a=AInstruction, b=loadAC, out=loadA);
+    ARegister(in=outAMux, load=loadA, out=outAReg);
+
+    // D register - load is C-instruction d2
+    And (a=instruction[4], b=CInstruction, out=loadD);
+    DRegister (in=outALU, load=loadD, out=outDReg);
+
+    // PC - reset it input, load A reg if zr output of ALU
+    // zr is 1 if (out == 0), 0 otherwise
+    // ng is 1 if (out < 0),  0 otherwise
+    // set jump if 
+    //     null 0 0 0 false
+    //     JGT  0 0 1 NOT ng and NOT zr
+    //     JEQ  0 1 0 zr
+    //     JGE  0 1 1 NOT ng 
+    //     JLT  1 0 0 ng
+    //     JNE  1 0 1 NOT zr
+    //     JLE  1 1 0 ng or zr
+    //     JMP  1 1 1 true
+    Not (in=ng, out=ge);
+    Not (in=zr, out=nzr);
+    And (a=nzr, b=ge, out=g);
+    Or (a=ng, b=zr, out=le);
+    Mux8Way(a=false, b=g, c=zr, d=ge, e=ng, f=nzr, g=le, h=true, sel=instruction[0..2], out=jump);
+    And (a=CInstruction, b=jump, out=load);
+    PC(in=outAReg, load=load, inc=true, reset=reset, out[0..14]=pc);
+
+    // ALU - MUX either M or A depending on "a" bit. 
+    //   zero D - c1
+    //   negate D - c2
+    //   zero A/M - c3
+    //   negate A/M - c4
+    //   x+y ? x&y - c5
+    //   negate out - c6
+    Mux16 (a=outAReg, b=inM, sel=instruction[12], out=outARegOrInM);
+    ALU (x=outDReg, y=outARegOrInM, zx=instruction[11], nx=instruction[10], zy=instruction[9], 
+         ny=instruction[8], f=instruction[7], no=instruction[6], out=outALU, zr=zr, ng=ng);
+
+    // Outputs
+    Or16 (a=outALU, b=outALU, out=outM);
+    Or16 (a=outAReg, b=outAReg, out[0..14]=addressM);
+    And (a=CInstruction, b=instruction[3], out=writeM); // C instruction and d3
 }

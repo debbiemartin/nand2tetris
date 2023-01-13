@@ -17,7 +17,7 @@
 @8192
 D=A
 @screenlen
-M=D// 2^13 - 32 cols (512 pixels) x 256 rows
+M=D // 2^13 - 32 cols (512 pixels) x 256 rows
 
 (OUTERLOOP)
     @SCREEN
